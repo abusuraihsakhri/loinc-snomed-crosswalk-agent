@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loinc-snomed-crosswalk-engine"
+version = "2.0.0"
+description = "OntoCrosswalk Sentinel: LOINC, SNOMED-CT & ICD-10 Semantic Harmonization Engine"
+readme = "README.md"
+authors = [{ name = "Dr. Abu Suraih Sakhri", email = "abusuraih@example.com" }]
+license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+loinc-snomed-crosswalk-engine = "loinc_snomed_crosswalk_agent.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/abusuraihsakhri/loinc-snomed-crosswalk-engine"
+Repository = "https://github.com/abusuraihsakhri/loinc-snomed-crosswalk-engine.git"
