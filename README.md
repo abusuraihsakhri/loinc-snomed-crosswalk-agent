@@ -1,7 +1,7 @@
 # LOINC SNOMED Crosswalk Agent
 
-> **Domain:** Clinical Decision Support & Biomedical Computing  
-> **Reference Guidelines & Standards:** `Standard Clinical Formulations & ISO/IEC Quality Frameworks`
+> **Domain:** Clinical Decision Support & Biomedical Computing
+> **Standards:** CAP / CLSI / ISO / Regenstrief LOINC & SNOMED International
 
 <div align="center">
 
@@ -16,89 +16,136 @@
 
 ---
 
-## 📖 What It Does
+## What It Does
 
-**LOINC SNOMED Crosswalk Agent** is an advanced analytical and computational platform implementing Local Laboratory Strings to Standardized LOINC/SNOMED Mapper.
+**LOINC SNOMED Crosswalk Agent** is an analytical platform for semantic harmonization of clinical laboratory observations. It maps local EHR laboratory strings to standardized LOINC codes and SNOMED-CT concepts using a multi-agent evaluation architecture with three specialized workers:
 
----
-
-## ⚙️ Key Capabilities & Algorithmic Modules
-
-### 🔬 Core Algorithmic & Evaluation Engines
-
-- **`Severity`** — dedicated module for severity evaluation and state verification.
-- **`DomainKnowledgeRegistry`**: Enterprise domain rules, guideline matrices, and evidence benchmarks.
-- **`AgentAlert`** — dedicated module for agent alert evaluation and state verification.
-- **`FuzzyConceptMatcherAgent`**: Specialized Sub-Agent 1 for loinc-snomed-crosswalk-agent
-- **`HierarchyDisambiguatorAgent`**: Specialized Sub-Agent 2 for loinc-snomed-crosswalk-agent
-- **`CrosswalkValidatorAgent`**: Specialized Sub-Agent 3 for loinc-snomed-crosswalk-agent
+- **InvariantQCWorker** — Primary metric threshold monitoring
+- **SafetyEscalationWorker** — Critical safety interlock and STAT escalation detection
+- **ProtocolConformanceWorker** — Biomarker concordance and anomaly triage
 
 ---
 
-## 💻 CLI Quickstart & Usage
+## Installation
 
-### 1. Guided Interactive Mode
 ```bash
-python cli.py
+# Clone the repository
+git clone https://github.com/abusuraihsakhri/loinc-snomed-crosswalk-agent.git
+cd loinc-snomed-crosswalk-agent
+
+# Create a virtual environment
+python -m venv venv
+source venv/bin/activate  # Linux/macOS
+# or: venv\Scripts\activate  # Windows
+
+# Install dependencies
+pip install fastapi uvicorn pydantic pytest
 ```
 
-### 2. Direct Parameterized Evaluation
+---
+
+## Usage
+
+### CLI Commands
+
 ```bash
-python cli.py --task-id <value> --target <value> --primary <value> --secondary <value>
+# Single task evaluation
+python cli.py audit --task-id TASK-001 --primary 28.5 --secondary 14.2 --critical --status DISCORDANT
+
+# Batch process CSV records
+python cli.py batch -i sample.csv -o results.csv
+
+# Query the supervisory assistant
+python cli.py chat "What is the system status?"
+
+# Verify HMAC audit trail integrity
+python cli.py verify-audit
+
+# Launch FastAPI REST server
+python cli.py serve --host 127.0.0.1 --port 8000
 ```
 
-### Parameter Reference
-- `--task-id`: Specifies input measurement or parameter value.
-- `--target`: Specifies input measurement or parameter value.
-- `--primary`: Specifies input measurement or parameter value.
-- `--secondary`: Specifies input measurement or parameter value.
-- `--critical`: Specifies input measurement or parameter value.
-- `--status`: Specifies input measurement or parameter value.
-- `--input`: Specifies input measurement or parameter value.
-- `--output`: Specifies input measurement or parameter value.
-
-### Input Data Schema
+### Input Data Schema (CSV)
 
 | Field | Description | Requirement |
 |:------|:------------|:------------|
-| `case_id` | Parameter / observation metric | Required |
-| `patient_synthetic_id` | Parameter / observation metric | Required |
-| `metric_primary` | Parameter / observation metric | Required |
-| `metric_secondary` | Parameter / observation metric | Required |
-| `is_stat` | Parameter / observation metric | Required |
-| `status_flag` | Parameter / observation metric | Required |
+| `task_id` | Unique task / case identifier | Required |
+| `target_identifier` | Entity or specimen key | Required |
+| `primary_metric` | Primary measurement value | Required |
+| `secondary_metric` | Secondary kinetic index | Optional |
+| `status_descriptor` | Status code (NOMINAL, DISCORDANT, etc.) | Optional |
+| `is_critical_flag` | Emergency escalation flag | Optional |
+
+### REST API
+
+| Endpoint | Method | Description |
+|:---------|:-------|:------------|
+| `/health` | GET | Health check |
+| `/metrics` | GET | Prometheus operational metrics |
+| `/api/audit` | POST | Submit task for evaluation |
+| `/api/chat` | POST | Query supervisory assistant |
+| `/api/audit/logs` | GET | Retrieve and verify HMAC audit trail |
 
 ---
 
-## 🛡️ Security & Enterprise Architecture
+## Security
 
-* **Zero-PHI Outbound Interceptor:** Active AST and regex inspection blocking SSNs, MRNs, phone numbers, and patient identifiers.
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition.
-* **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
-* **Active Learning Bayesian Calibration:** Dynamic tracker updating worker reliability weights and monitoring Brier calibration drift.
-* **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`).
+* **Zero-PHI Outbound Guard:** Active regex inspection blocking SSNs, MRNs, phone numbers, emails, DOBs, and patient identifiers from outbound data.
+* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation.
+* **Path Traversal Protection:** Batch file I/O is validated to stay within the working directory.
+* **Secure Key Management:** Audit signing key sourced from `AUDIT_SECRET_KEY` environment variable; falls back to ephemeral secure random key if unset (logs a warning).
+
+### Environment Variables
+
+| Variable | Description | Default |
+|:---------|:------------|:--------|
+| `AUDIT_SECRET_KEY` | HMAC-SHA256 audit signing key | Ephemeral random (warns) |
+| `MODEL_PROVIDER` | LLM provider (mock, ollama, claude, openai) | mock |
 
 ---
 
-## 🧪 Testing & Verification
-
-Run the automated test suite:
+## Testing
 
 ```bash
+# Run full test suite
 pytest -v
-```
 
-Execute high-throughput batch simulation benchmarks:
-
-```bash
-python simulator.py --tasks 1000 --concurrency 8
+# Run with coverage (requires pytest-cov)
+pytest -v --cov=agents --cov=loinc_snomed_crosswalk_agent
 ```
 
 ---
 
-## 🐳 Container Deployment
+## Container Deployment
 
 ```bash
+# Build and run with Docker
 docker build -t loinc-snomed-crosswalk-agent .
-docker run -p 8000:8000 loinc-snomed-crosswalk-agent
+docker run -p 8000:8000 -e AUDIT_SECRET_KEY=your-secret-key loinc-snomed-crosswalk-agent
+
+# Or use Docker Compose
+AUDIT_SECRET_KEY=your-secret-key docker-compose up
 ```
+
+---
+
+## Architecture
+
+```
+cli.py (Entry Point)
+  └── agents/
+      ├── base.py          — PHI guard, HMAC audit trail, security utilities
+      ├── models.py        — Pydantic schemas and data definitions
+      ├── supervisor.py    — SystemSupervisor orchestrator
+      ├── workers.py       — Three specialized evaluation workers
+      ├── api.py           — FastAPI REST server
+      ├── metrics.py       — Prometheus metrics exporter
+      ├── learning.py      — Bayesian calibration engine
+      └── streamer.py      — WebSocket telemetry broadcaster
+```
+
+---
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.

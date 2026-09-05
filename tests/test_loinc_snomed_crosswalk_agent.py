@@ -3,12 +3,14 @@ Automated Pytest Test Suite for Loinc Snomed Crosswalk Agent.
 Domain: Clinical & Biomedical AI
 Standard: CAP / CLSI / ISO Standards
 """
+import os
 import sys
+import tempfile
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pytest
-from agents.base import PHIGuard, AuditLogger, SecurityException
+from agents.base import PHIGuard, AuditLogger, SecurityException, validate_safe_path, AuditTrail
 from agents.models import SystemTaskPayload, UrgencyLevel, SystemIntegrityStatus
 from agents.workers import InvariantQCWorker, SafetyEscalationWorker, ProtocolConformanceWorker
 from agents.supervisor import SystemSupervisor
@@ -63,3 +65,76 @@ def test_supervisor_consensus_and_audit():
     assert main(["audit", "--task-id", "CLI-TEST-01"]) == 0
     assert main(["chat", "Explain", "specifications"]) == 0
     assert main(["verify-audit"]) == 0
+
+
+def test_validate_safe_path_allows_cwd_paths():
+    """Paths within the working directory should be allowed."""
+    cwd = Path.cwd()
+    test_file = cwd / "test_safe_path.tmp"
+    test_file.write_text("test")
+    try:
+        result = validate_safe_path("test_safe_path.tmp", must_exist=True)
+        assert Path(result).resolve() == test_file.resolve()
+    finally:
+        test_file.unlink()
+
+
+def test_validate_safe_path_rejects_traversal():
+    """Paths outside the working directory should be rejected."""
+    with pytest.raises(PermissionError):
+        validate_safe_path("/etc/passwd")
+    with pytest.raises(PermissionError):
+        validate_safe_path("../../../etc/passwd")
+
+
+def test_validate_safe_path_missing_file():
+    """Non-existent files should raise FileNotFoundError when must_exist=True."""
+    with pytest.raises(FileNotFoundError):
+        validate_safe_path("nonexistent_file_12345.csv", must_exist=True)
+
+
+def test_audit_trail_uses_env_key():
+    """AuditTrail should use AUDIT_SECRET_KEY from environment when set."""
+    os.environ["AUDIT_SECRET_KEY"] = "test-secret-key-12345"
+    try:
+        trail = AuditTrail()
+        assert trail.secret_key == b"test-secret-key-12345"
+    finally:
+        del os.environ["AUDIT_SECRET_KEY"]
+
+
+def test_audit_trail_falls_back_to_random_key():
+    """AuditTrail should generate a random key when no env var is set."""
+    os.environ.pop("AUDIT_SECRET_KEY", None)
+    trail = AuditTrail()
+    # Key should be 64 hex chars = 32 bytes
+    assert len(trail.secret_key) == 64
+
+
+def test_batch_cli_with_missing_file_returns_error():
+    """CLI batch command should return non-zero for missing input file."""
+    result = main(["batch", "-i", "nonexistent_input_12345.csv"])
+    assert result == 1
+
+
+def test_batch_cli_with_path_traversal_returns_error():
+    """CLI batch command should reject paths outside working directory."""
+    result = main(["batch", "-i", "/etc/passwd"])
+    assert result == 1
+
+
+def test_batch_cli_success():
+    """CLI batch command should process a valid CSV file in the working directory."""
+    cwd = Path.cwd()
+    input_file = cwd / "test_batch_input.csv"
+    output_file = cwd / "test_batch_output.csv"
+    input_file.write_text("task_id,target_identifier,primary_metric,secondary_metric,status_descriptor\nT1,KEY-01,10.0,5.0,NOMINAL\n")
+    try:
+        result = main(["batch", "-i", str(input_file), "-o", str(output_file)])
+        assert result == 0
+        assert output_file.exists()
+    finally:
+        if input_file.exists():
+            input_file.unlink()
+        if output_file.exists():
+            output_file.unlink()

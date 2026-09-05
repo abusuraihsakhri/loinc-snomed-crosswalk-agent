@@ -8,9 +8,13 @@ import json
 import time
 import hmac
 import hashlib
+import secrets
+import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from pydantic import BaseModel, Field
+
+logger = logging.getLogger(__name__)
 
 PHI_PATTERNS = [
     re.compile(r"\b(?:MRN|mrn)[:#\s-]*\d{4,10}\b", re.IGNORECASE),
@@ -57,7 +61,19 @@ class PHIGuard:
 class AuditTrail:
     """Cryptographic Tamper-Evident HMAC-SHA256 Audit Trail."""
     def __init__(self, secret_key: Optional[str] = None):
-        self.secret_key = (secret_key or os.getenv("AUDIT_SECRET_KEY", "loinc-snomed-crosswalk-agent-master-audit-key-2026")).encode("utf-8")
+        env_key = os.getenv("AUDIT_SECRET_KEY")
+        if secret_key:
+            self.secret_key = secret_key.encode("utf-8")
+        elif env_key:
+            self.secret_key = env_key.encode("utf-8")
+        else:
+            # Generate a secure random key if none provided; warn operator
+            random_key = secrets.token_hex(32)
+            logger.warning(
+                "AUDIT_SECRET_KEY not set. Using ephemeral random key. "
+                "Set AUDIT_SECRET_KEY env var for persistent audit integrity across restarts."
+            )
+            self.secret_key = random_key.encode("utf-8")
         self.logs: List[Dict[str, Any]] = []
 
     def log(self, actor: str, actor_tier: str, event_type: str, details: Dict[str, Any]) -> Dict[str, Any]:
@@ -116,3 +132,18 @@ class ActionExecutor:
         res = fn(*args, **kwargs)
         AuditLogger.log(actor, actor_tier, action_type, {"status": "SUCCESS"})
         return res
+
+
+def validate_safe_path(path_str: str, must_exist: bool = False) -> str:
+    """Validate that a file path is safe (no traversal, within cwd)."""
+    from pathlib import Path
+    cwd = Path.cwd()
+    p = Path(path_str).resolve()
+    if must_exist and not p.is_file():
+        raise FileNotFoundError(f"Input file not found: {path_str}")
+    # Ensure path is within working directory (prevent traversal)
+    try:
+        p.relative_to(cwd.resolve())
+    except ValueError:
+        raise PermissionError(f"Path '{path_str}' is outside the working directory and blocked for safety.")
+    return str(p)

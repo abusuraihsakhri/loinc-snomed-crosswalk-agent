@@ -16,6 +16,23 @@ import sys
 import uuid
 from typing import Dict, Any, List, Optional
 
+# Allow running both as a script and as a module
+try:
+    from agents.base import validate_safe_path
+except ImportError:
+    import os
+    from pathlib import Path
+    def validate_safe_path(path_str: str, must_exist: bool = False) -> str:
+        cwd = Path.cwd()
+        p = Path(path_str).resolve()
+        if must_exist and not p.is_file():
+            raise FileNotFoundError(f"Input file not found: {path_str}")
+        try:
+            p.relative_to(cwd.resolve())
+        except ValueError:
+            raise PermissionError(f"Path '{path_str}' is outside the working directory and blocked for safety.")
+        return str(p)
+
 
 class Severity(str):
     INFO = "INFO"
@@ -266,15 +283,30 @@ def main(argv=None):
         return 0
 
     if args.command == "batch":
-        with open(args.input, mode="r", encoding="utf-8-sig") as f:
-            reader = csv.DictReader(f)
-            fieldnames = list(reader.fieldnames or [])
-            rows = list(reader)
+        try:
+            safe_input = validate_safe_path(args.input, must_exist=True)
+            safe_output = validate_safe_path(args.output, must_exist=False)
+        except (FileNotFoundError, PermissionError) as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
+
+        try:
+            with open(safe_input, mode="r", encoding="utf-8-sig") as f:
+                reader = csv.DictReader(f)
+                fieldnames = list(reader.fieldnames or [])
+                rows = list(reader)
+        except (csv.Error, OSError) as e:
+            print(f"Error reading input file: {e}", file=sys.stderr)
+            return 1
 
         out_fields = fieldnames + ["overall_status", "total_alerts", "critical_count", "consensus_summary"]
         out_rows = []
         for r in rows:
-            dossier = coordinator.audit_case(dict(r))
+            try:
+                dossier = coordinator.audit_case(dict(r))
+            except (ValueError, Exception) as e:
+                print(f"Warning: Skipping row due to error: {e}", file=sys.stderr)
+                continue
             row_dict = dict(r)
             row_dict["overall_status"] = dossier["overall_status"]
             row_dict["total_alerts"] = dossier["total_alerts"]
@@ -282,10 +314,14 @@ def main(argv=None):
             row_dict["consensus_summary"] = dossier["consensus_summary"]
             out_rows.append(row_dict)
 
-        with open(args.output, mode="w", encoding="utf-8", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=out_fields)
-            writer.writeheader()
-            writer.writerows(out_rows)
+        try:
+            with open(safe_output, mode="w", encoding="utf-8", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=out_fields)
+                writer.writeheader()
+                writer.writerows(out_rows)
+        except OSError as e:
+            print(f"Error writing output file: {e}", file=sys.stderr)
+            return 1
         print(f"Processed {len(out_rows)} records -> {args.output}")
         return 0
 
