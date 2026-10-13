@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loinc-snomed-crosswalk-engine"
-version = "2.0.0"
+version = "2.0.1"
 description = "OntoCrosswalk Sentinel: LOINC, SNOMED-CT & ICD-10 Semantic Harmonization Engine"
 readme = "README.md"
 authors = [{ name = "Dr. Abu Suraih Sakhri", email = "abusuraih@example.com" }]
@@ -17,11 +17,16 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 requires-python = ">=3.9"
-dependencies = []
+dependencies = ["pydantic>=2.0,<3", "fastapi>=0.110,<1", "uvicorn>=0.25,<1"]
 
 [project.scripts]
 loinc-snomed-crosswalk-engine = "loinc_snomed_crosswalk_agent.cli:main"
+loinc-snomed-crosswalk-agent = "loinc_snomed_crosswalk_agent.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/abusuraihsakhri/loinc-snomed-crosswalk-engine"
-Repository = "https://github.com/abusuraihsakhri/loinc-snomed-crosswalk-engine.git"
+Homepage = "https://github.com/abusuraihsakhri/loinc-snomed-crosswalk-agent"
+Repository = "https://github.com/abusuraihsakhri/loinc-snomed-crosswalk-agent.git"
+
+[tool.setuptools]
+packages = ["agents", "loinc_snomed_crosswalk_agent"]
+py-modules = ["cli", "onto_crosswalk", "enrichment", "simulator", "loinc_snomed_crosswalk_agent_app", "onto_crosswalk_app"]

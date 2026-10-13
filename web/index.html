@@ -1,236 +1,101 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loinc Snomed Crosswalk Engine — Operations Console</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #090d16;
-            --card: #111827;
-            --border: #1f293d;
-            --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.25);
-            --text: #f3f4f6;
-            --text-muted: #9ca3af;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --success: #10b981;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            padding: 2rem;
-            min-height: 100vh;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .header-title h1 { font-size: 1.6rem; font-weight: 700; color: #fff; }
-        .header-title p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem; }
-        .badge {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            background: var(--accent-glow);
-            color: var(--accent);
-            border: 1px solid var(--accent);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 1.5rem;
-        }
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-        .card h2 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
-        input, select, textarea {
-            width: 100%;
-            padding: 0.65rem 0.9rem;
-            background: #0d1322;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: #fff;
-            font-family: inherit;
-            font-size: 0.9rem;
-        }
-        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
-        .btn {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 0.7rem 1.4rem;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            width: 100%;
-        }
-        .btn:hover { background: #2563eb; }
-        .terminal {
-            background: #060911;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: #10b981;
-            height: 380px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-        }
-        .metrics-bar {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .metric-box {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-        }
-        .metric-val { font-size: 1.4rem; font-weight: 700; color: #fff; margin-top: 0.25rem; }
-        .metric-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>LOINC–SNOMED Crosswalk | Local Mapping Explorer</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #172234; background: #f3f6fa; line-height: 1.5; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header { background: #142841; color: #fff; padding: 2.4rem max(1.3rem, calc((100vw - 1080px) / 2)); }
+    header h1 { font-size: clamp(1.7rem, 3vw, 2.45rem); line-height: 1.18; margin: 0 0 .55rem; }
+    header p { max-width: 790px; margin: 0; color: #d5e4f3; }
+    main { max-width: 1130px; margin: auto; padding: 1.4rem 1.2rem 3rem; }
+    h2 { font-size: 1.2rem; margin: 0 0 .7rem; }
+    h3 { font-size: 1rem; margin: 0 0 .5rem; }
+    p { margin-top: .25rem; }
+    .caution { border-left: 4px solid #b07014; background: #fff6e7; padding: .9rem 1.1rem; margin: 0 0 1.3rem; }
+    .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; align-items: start; }
+    .panel { border: 1px solid #d5deea; border-radius: 12px; background: #fff; padding: 1.3rem; box-shadow: 0 3px 10px #101b2b0b; min-width: 0; }
+    .muted { color: #4d5c6c; font-size: .91rem; }
+    label { font-weight: 650; display: block; margin: 1rem 0 .35rem; }
+    input[type=file], textarea { width: 100%; border: 1px solid #8394a8; border-radius: 7px; padding: .75rem; font: inherit; background: #fff; color: #172234; }
+    textarea { resize: vertical; min-height: 160px; }
+    input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid #eab14a; outline-offset: 2px; }
+    button { background: #1557ab; border: 1px solid #1557ab; border-radius: 7px; padding: .72rem 1.15rem; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+    button.secondary { background: #fff; color: #1557ab; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .buttons { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1rem; }
+    code { background: #eef2f8; padding: .08rem .25rem; border-radius: 3px; font-size: .86em; overflow-wrap: anywhere; }
+    .schema { border: 1px solid #dde5ef; border-radius: 6px; background: #f7f9fc; padding: .75rem; overflow-wrap: anywhere; font-size: .85rem; }
+    .stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .7rem; margin: 1.2rem 0; }
+    .stat { background: #fff; border: 1px solid #d5deea; border-radius: 9px; padding: .75rem; }
+    .stat strong { display: block; font-size: 1.45rem; font-variant-numeric: tabular-nums; }
+    .stat span { color: #506075; font-size: .78rem; }
+    #feedback { border-radius: 6px; background: #e7f2ff; color: #123f77; padding: .75rem; margin: 1rem 0; }
+    #feedback.error { background: #fff0ed; color: #942c1f; }
+    .table-scroll { overflow-x: auto; max-height: 550px; }
+    table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+    th, td { text-align: left; border-bottom: 1px solid #e5eaf0; padding: .7rem .65rem; overflow-wrap: anywhere; }
+    th { background: #eaf0f7; position: sticky; top: 0; white-space: nowrap; }
+    tbody tr:hover { background: #f5f8fb; }
+    footer { margin-top: 1.5rem; color: #4e5d70; font-size: .85rem; }
+    a { color: #1557ab; }
+    @media (max-width: 760px) { .columns { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, 1fr); } header { padding: 1.5rem 1.2rem; } }
+  </style>
+  <script src="app.js" defer></script>
 </head>
 <body>
-
-    <div class="header">
-        <div class="header-title">
-            <h1>Loinc Snomed Crosswalk Engine</h1>
-            <p>Domain: Clinical & Cryptographic AI | Standard: CAP / CLSI / NIST Standards | LabMind-Atlas Architecture</p>
-        </div>
-        <div>
-            <span class="badge">Air-Gapped Active</span>
-            <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border-color: #10b981;">Zero-PHI Guard Active</span>
-        </div>
+  <header>
+    <h1>LOINC–SNOMED Crosswalk</h1>
+    <p>Offline, provenance-preserving lookup of local laboratory terms against a mapping CSV you supply. Exact matching, explicit uncertainty, and no server dependency.</p>
+  </header>
+  <main>
+    <p class="caution"><strong>Research and terminology-review tool.</strong> No authoritative mappings are bundled. A candidate is not an independently verified LOINC/SNOMED equivalence. Use licensed, versioned terminology data and expert review before clinical implementation. Do not enter patient identifiers.</p>
+    <div class="columns">
+      <section class="panel" aria-labelledby="mapping-heading">
+        <h2 id="mapping-heading">1. Load your mapping table</h2>
+        <p class="muted">Select a UTF-8 CSV with documented source and version. The entire operation runs inside your browser; the file is not uploaded. Maximum 2 MiB or 50,000 rows.</p>
+        <label for="mapping-file">Mapping CSV</label>
+        <input id="mapping-file" type="file" accept=".csv,text/csv">
+        <h3 style="margin-top:1.2rem">Required CSV headers</h3>
+        <div class="schema"><code>local_term,loinc_code,snomed_code,relation,source,version</code></div>
+        <p class="muted">Codes must resemble LOINC (<code>digits-digit</code>) and SNOMED CT (6–18 digits) identifiers. This validates format, <em>not</em> code existence. <code>relation</code> must be <code>equivalent</code>, <code>associated</code>, or <code>answer</code>, as asserted by your source. Duplicate or conflicting rows remain visible.</p>
+      </section>
+      <section class="panel" aria-labelledby="lookup-heading">
+        <h2 id="lookup-heading">2. Look up local terms</h2>
+        <p class="muted">Enter one term per line. Matching ignores case and repeated whitespace, but never guesses synonyms or infers a code.</p>
+        <form id="lookup-form">
+          <label for="queries">Local terms (up to 5,000)</label>
+          <textarea id="queries" spellcheck="false" placeholder="Enter terms from your mapping CSV, one per line" required></textarea>
+          <div class="buttons">
+            <button id="run" type="submit" disabled>Find mappings</button>
+            <button id="export" type="button" class="secondary" disabled>Export results CSV</button>
+          </div>
+        </form>
+        <p id="feedback" role="status" aria-live="polite">Select a valid mapping CSV to begin.</p>
+      </section>
     </div>
-
-    <div class="metrics-bar">
-        <div class="metric-box">
-            <div class="metric-label">System Status</div>
-            <div class="metric-val" style="color: var(--success);" id="m-status">OPTIMAL</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">Tasks Processed</div>
-            <div class="metric-val" id="m-tasks">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">Audit Blocks Signed</div>
-            <div class="metric-val" id="m-audit">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">PHI Interceptions</div>
-            <div class="metric-val" style="color: var(--accent);" id="m-phi">0</div>
-        </div>
-    </div>
-
-    <div class="grid">
-        <div class="card">
-            <h2>⚙️ Dispatch Distributed Component Audit</h2>
-            <div class="form-group">
-                <label>Task / Sample ID</label>
-                <input type="text" id="task_id" value="TASK-2026-LIVE-01">
-            </div>
-            <div class="form-group">
-                <label>Target Identifier</label>
-                <input type="text" id="target_id" value="SPECIMEN-ALPHA-77">
-            </div>
-            <div class="form-group">
-                <label>Primary Measurement / Value</label>
-                <input type="number" id="primary_metric" value="29.4" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Secondary Metric / Kinetic Index</label>
-                <input type="number" id="secondary_metric" value="14.8" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Status / Phenotype Descriptor</label>
-                <input type="text" id="status_descriptor" value="DISCORDANT_ANOMALY">
-            </div>
-            <div class="form-group">
-                <label><input type="checkbox" id="is_critical" checked> Trigger Emergency / Critical Flag</label>
-            </div>
-            <button class="btn" onclick="runAudit()">Execute Distributed Component Audit</button>
-        </div>
-
-        <div class="card">
-            <h2>📊 Real-Time Consensus Dossier & Audit Log</h2>
-            <div class="terminal" id="outputConsole">// Loinc Snomed Crosswalk Engine Operations Console Ready
-// Connection established with Air-Gapped Supervisor
-// Cryptographic HMAC-SHA256 audit ledger loaded.
-// Ready for live task payload dispatch...</div>
-        </div>
-    </div>
-
-    <script>
-        async function runAudit() {
-            const consoleEl = document.getElementById('outputConsole');
-            consoleEl.innerText = "// Dispatching task across specialized workers...
-// Invoking InvariantQCWorker, SafetyEscalationWorker, ProtocolWorker...";
-
-            const payload = {
-                task_id: document.getElementById('task_id').value,
-                target_identifier: document.getElementById('target_id').value,
-                primary_metric: parseFloat(document.getElementById('primary_metric').value),
-                secondary_metric: parseFloat(document.getElementById('secondary_metric').value),
-                status_descriptor: document.getElementById('status_descriptor').value,
-                is_critical_flag: document.getElementById('is_critical').checked
-            };
-
-            try {
-                const res = await fetch('/api/audit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                consoleEl.innerText = JSON.stringify(data, null, 2);
-                document.getElementById('m-tasks').innerText = parseInt(document.getElementById('m-tasks').innerText) + 1;
-                document.getElementById('m-audit').innerText = parseInt(document.getElementById('m-audit').innerText) + 1;
-            } catch (err) {
-                consoleEl.innerText = "// Offline / Simulation Output:\n" + JSON.stringify({
-                    dossier_id: "DOSSIER-SIM-" + Math.floor(Math.random()*10000),
-                    system: "loinc-snomed-crosswalk-engine",
-                    domain: "Clinical & Cryptographic AI",
-                    task_id: payload.task_id,
-                    overall_urgency: payload.is_critical_flag ? "CRITICAL_STAT_PANIC" : "ELEVATED_RISK",
-                    integrity_status: "DISCORDANT_ANOMALY",
-                    alerts: [
-                        { worker: "InvariantQCWorker", alert: "Primary metric exceeds upper reference bound" },
-                        { worker: "SafetyEscalationWorker", alert: "Critical emergency interlock flag active" }
-                    ],
-                    audit_hash: "HMAC_SHA256_e83f9a72b941d6c381f9"
-                }, null, 2);
-            }
-        }
-    </script>
+    <section aria-label="Lookup statistics" class="stats">
+      <div class="stat"><strong id="map-count">0</strong><span>Mapping rows loaded</span></div>
+      <div class="stat"><strong id="query-count">0</strong><span>Terms queried</span></div>
+      <div class="stat"><strong id="matched-count">0</strong><span>Single candidates</span></div>
+      <div class="stat"><strong id="ambiguous-count">0</strong><span>Ambiguous terms</span></div>
+      <div class="stat"><strong id="unmapped-count">0</strong><span>Unmapped terms</span></div>
+    </section>
+    <section class="panel" aria-labelledby="results-heading">
+      <h2 id="results-heading">3. Results</h2>
+      <p class="muted">Each source assertion is shown independently. A single candidate is not a verified match; ambiguous or unmapped entries require review.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th scope="col">Local term</th><th scope="col">Status</th><th scope="col">LOINC</th><th scope="col">SNOMED CT</th><th scope="col">Relation</th><th scope="col">Source</th><th scope="col">Version</th></tr></thead>
+          <tbody id="results"></tbody>
+        </table>
+      </div>
+    </section>
+    <footer>Local-only static application. Nothing is submitted to a server. Source code and Python CLI: <a href="https://github.com/abusuraihsakhri/loinc-snomed-crosswalk-agent">repository</a>.</footer>
+  </main>
 </body>
 </html>
