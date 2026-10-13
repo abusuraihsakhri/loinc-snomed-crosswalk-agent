@@ -1,5 +1,6 @@
 """Focused regression tests for exact, user-provided terminology mappings."""
 import json
+from types import SimpleNamespace
 
 import pytest
 
@@ -57,31 +58,23 @@ def test_reject_invalid_rows(tmp_path, rows):
 
 def test_cli_single_and_batch(tmp_path, capsys):
     mapping = fixture(tmp_path)
-    class Args:
-        term = "Serum assay"
-        queries = None
-        output = None
-        mapping = str(mapping)
-    assert run_cli(Args) == 0
+    args = SimpleNamespace(term="Serum assay", queries=None, output=None, mapping=str(mapping))
+    assert run_cli(args) == 0
     assert json.loads(capsys.readouterr().out)["status"] == "single_candidate"
     terms = tmp_path / "terms.csv"
     terms.write_text("local_term\nSerum assay\nNot found\n", encoding="utf-8")
-    Args.term = None
-    Args.queries = str(terms)
+    args.term = None
+    args.queries = str(terms)
     out = tmp_path / "results.json"
-    Args.output = str(out)
-    assert run_cli(Args) == 0
+    args.output = str(out)
+    assert run_cli(args) == 0
     assert [r["status"] for r in json.loads(out.read_text())] == ["single_candidate", "unmapped"]
 
 
 def test_reject_overwrite_and_malformed_query(tmp_path):
     mapping = fixture(tmp_path)
-    class Args:
-        term = "Serum assay"
-        queries = None
-        output = str(mapping)
-        mapping = str(mapping)
-    assert run_cli(Args) == 1
+    args = SimpleNamespace(term="Serum assay", queries=None, output=str(mapping), mapping=str(mapping))
+    assert run_cli(args) == 1
     query = tmp_path / "terms.csv"
     query.write_text("something_else\nA\n")
     with pytest.raises(ValueError):
