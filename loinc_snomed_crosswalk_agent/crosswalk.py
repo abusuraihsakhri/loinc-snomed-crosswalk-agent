@@ -98,3 +98,27 @@ def load_terms(path):
                 raise ValueError(f"Unexpected extra column at query row {row_number}")
             terms.append(row.get("local_term") or "")
         return terms
+
+
+def run_cli(args):
+    """CLI adapter shared by the legacy and installed entry points."""
+    from sys import stdout, stderr
+    try:
+        index = load_mappings(args.mapping)
+        terms = [args.term] if args.term is not None else load_terms(args.queries)
+        results = [lookup(index, term) for term in terms]
+        document = json.dumps(results[0] if args.term is not None else results,
+                              indent=2, ensure_ascii=False) + "\n"
+        if args.output:
+            out = Path(args.output)
+            # Avoid accidentally overwriting a mapping or input file.
+            if out.resolve() in {Path(args.mapping).resolve(),
+                                 Path(args.queries).resolve() if args.queries else None}:
+                raise ValueError("Output path must differ from input paths")
+            out.write_text(document, encoding="utf-8")
+        else:
+            stdout.write(document)
+        return 0
+    except (OSError, ValueError, csv.Error) as exc:
+        stderr.write(f"Crosswalk error: {exc}\n")
+        return 1
