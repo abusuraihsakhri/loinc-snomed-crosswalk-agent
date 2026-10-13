@@ -41,7 +41,20 @@ def main(argv=None):
     p_serve.add_argument("--host", default="127.0.0.1")
     p_serve.add_argument("--port", type=int, default=8000)
 
+    # Explicit, user-supplied terminology lookup (not a clinical inference).
+    p_crosswalk = subparsers.add_parser("crosswalk", help="Exact lookup in a user-provided LOINC/SNOMED mapping CSV")
+    p_crosswalk.add_argument("-m", "--mapping", required=True, help="Mapping CSV with provenance")
+    query_group = p_crosswalk.add_mutually_exclusive_group(required=True)
+    query_group.add_argument("--term", help="Local observation term to look up")
+    query_group.add_argument("--queries", help="Query CSV with a local_term column")
+    p_crosswalk.add_argument("-o", "--output", help="Optional JSON output file")
+
     args = parser.parse_args(argv)
+
+    if args.command == "crosswalk":
+        from loinc_snomed_crosswalk_agent.crosswalk import run_cli
+        return run_cli(args)
+
 
     if args.command == "audit":
         payload = SystemTaskPayload(
