@@ -93,7 +93,7 @@ class OntologyCoordinator:
             "stat_critical_alerts": stat_count,
             "warning_alerts": warn_count,
             "alerts": [a.to_dict() for a in all_alerts],
-            "guideline_standard": "Regenstrief LOINC & SNOMED International",
+            "guideline_standard": "Unvalidated legacy demonstration rules",
             "consensus_summary": f"Multi-agent supervision completed across 3 sub-agents with status [{status.value}].",
         }
 
@@ -105,6 +105,6 @@ class OntologyCoordinator:
         if "status" in q or "summary" in q:
             return f"OntoCrosswalk Sentinel: LOINC, SNOMED-CT & ICD-10 Semantic Harmonization Agent currently tracking {len(self.case_registry)} cases in on-premises memory."
         elif "guideline" in q or "standard" in q:
-            return "Active clinical surveillance operates under Regenstrief LOINC & SNOMED International validated protocols."
+            return "Legacy demonstration thresholds are not clinical guidelines or validated standards."
         else:
             return f"OntoCrosswalk Sentinel: LOINC, SNOMED-CT & ICD-10 Semantic Harmonization Agent executive agent online. Zero-PHI air-gapped monitoring active."
