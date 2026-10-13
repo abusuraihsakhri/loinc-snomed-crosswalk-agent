@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "loinc-snomed-crosswalk-agent"
+name = "loinc-snomed-crosswalk-engine"
 version = "2.0.1"
 description = "OntoCrosswalk Sentinel: LOINC, SNOMED-CT & ICD-10 Semantic Harmonization Engine"
 readme = "README.md"
@@ -20,6 +20,7 @@ requires-python = ">=3.9"
 dependencies = ["pydantic>=2.0,<3", "fastapi>=0.110,<1", "uvicorn>=0.25,<1"]
 
 [project.scripts]
+loinc-snomed-crosswalk-engine = "loinc_snomed_crosswalk_agent.cli:main"
 loinc-snomed-crosswalk-agent = "loinc_snomed_crosswalk_agent.cli:main"
 
 [project.urls]
